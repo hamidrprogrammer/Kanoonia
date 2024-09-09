@@ -1,0 +1,3 @@
+enum LoginFormEnum{
+  password, counter;
+}

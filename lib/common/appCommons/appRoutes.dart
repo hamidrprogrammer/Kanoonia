@@ -1,0 +1,29 @@
+class AppRoutes{
+  static const root = '/';
+  static const home = '/home';
+  static const splash = '/splash';
+  static const login = '/login';
+  static const loginForm = '/loginForm';
+  static const register = '/register';
+  static const verification = '/verification';
+  static const forgetPassword = '/forgetPassword';
+  static const addTestTargetPage = '/addTestTargetPage';
+  static const testDetailPage = '/testDetailPage';
+  static const workBookBottomSheet = '/workBookBottomSheet';
+  static const myPdfViewer = '/myPdfViewer';
+  static const appSupport = '/appSupport';
+  static const supportMessages = '/supportMessages';
+  static const addTicketPage = '/addTicketPage';
+  static const messengerPage = '/messengerPage';
+  static const matchPage = '/matchPage';
+  static const booksPage = '/booksPage';
+  static const pastExamsPage = '/pastExamsPage';
+  static const messengerDetailPage = '/messengerDetailPage';
+  static const news = '/news';
+  static const target = '/target';
+  static const workbookEasy = '/WorkbookEasy';
+  static const workbookFirst = '/WorkbookFirst';
+  static const polls = '/polls';
+  static const calling = '/calling';
+  static const call = '/call';
+}

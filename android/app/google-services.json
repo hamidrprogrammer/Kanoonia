@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "390565445089",
+    "project_id": "kanoon-873d9",
+    "storage_bucket": "kanoon-873d9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:390565445089:android:6e9ef664987e05f0c226a0",
+        "android_client_info": {
+          "package_name": "ir.kanoon.kanooniha.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB8jir3tBPSHRfDwTqjpYXGjfZKe90P-So"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
