@@ -62,8 +62,8 @@ android {
         minSdkVersion 27
         targetSdkVersion 33
         compileSdkVersion 34
-        versionCode 1073
-        versionName "7.0.4"
+        versionCode 1074
+        versionName "7.0.5"
         multiDexEnabled true
         buildToolsVersion "23.0.2"
 

@@ -37,9 +37,50 @@ class MainActivity : FlutterActivity() {
     private val CHANNEL = "ir.kanoon.kanooniha.android/messages"
     private lateinit var receiver: SignalRMessageReceiver
     companion object {
-        private const val REQUEST_WRITE_STORAGE_PERMISSION = 100
-        private const val REQUEST_READ_PHONE_STATE_PERMISSION = 101
-        private val REQUEST_CODE_SET_DEFAULT_DIALER = 123
+        private val REQUEST_PERMISSIONS = 100
+        private val REQUEST_IGNORE_BATTERY_OPTIMIZATION = 101
+        private val REQUEST_CODE_SET_DEFAULT_DIALER = 102
+        private val REQUEST_POST_NOTIFICATIONS_PERMISSION = 108
+
+    }
+    private fun checkAndRequestPermissions() {
+        val permissionsNeeded = mutableListOf<String>()
+
+        // POST_NOTIFICATIONS permission (Android 13+)
+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+
+
+        // RECORD_AUDIO permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.RECORD_AUDIO)
+        }
+
+        // READ_PHONE_STATE permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.READ_PHONE_STATE)
+        }
+
+        // Request all permissions at once
+        if (permissionsNeeded.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsNeeded.toTypedArray(),
+                REQUEST_PERMISSIONS
+            )
+        }
+
+        // Check and request battery optimization exclusion (Android 6+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+            intent.data = android.net.Uri.parse("package:$packageName")
+            startActivityForResult(intent, REQUEST_IGNORE_BATTERY_OPTIMIZATION)
+        }
     }
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun requestDefaultDialerRole() {
@@ -47,81 +88,85 @@ class MainActivity : FlutterActivity() {
         if (!roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) {
             val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER)
             startActivityForResult(intent, REQUEST_CODE_SET_DEFAULT_DIALER)
-        } else {
-            // The socket will handle the call status check
         }
     }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE_SET_DEFAULT_DIALER) {
-            if (resultCode == RESULT_OK) {
-                // Your app is now the default phone app
-                // The socket will handle the call status check
-            } else {
-                // The user denied the request
-                println("The user denied setting the app as default dialer.")
+
+        when (requestCode) {
+            REQUEST_IGNORE_BATTERY_OPTIMIZATION -> {
+                if (resultCode == RESULT_OK) {
+                    Log.d("MainActivity", "Battery optimizations ignored for the app.")
+                } else {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(
+                            this,
+                            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                            REQUEST_POST_NOTIFICATIONS_PERMISSION
+                        )
+                    }
+                }
             }
-        }
-    }
-    private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                REQUEST_WRITE_STORAGE_PERMISSION
-            )
+
+            REQUEST_CODE_SET_DEFAULT_DIALER -> {
+                if (resultCode == RESULT_OK) {
+                    Log.d("MainActivity", "App is now the default phone app.")
+                } else {
+                    Log.d("MainActivity", "User denied setting the app as default dialer.")
+                }
+            }
         }
     }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array<out String>,
+        permissions: Array<String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_WRITE_STORAGE_PERMISSION) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                // Permission granted, you can perform the operation
-            } else {
-                // Permission denied, inform the user that storage access is needed
-            }
-        }
-        if (requestCode == REQUEST_READ_PHONE_STATE_PERMISSION) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                Log.d("MainActivity", "READ_PHONE_STATE permission accept")
-                // Permission granted, you can perform the operation
-            } else {
-                Log.d("MainActivity", "READ_PHONE_STATE permission denied")
-                // Permission denied, inform the user that storage access is needed
+
+        if (requestCode == REQUEST_PERMISSIONS) {
+            permissions.forEachIndexed { index, permission ->
+                when (permission) {
+                    Manifest.permission.POST_NOTIFICATIONS -> {
+                        if (grantResults[index] == PackageManager.PERMISSION_GRANTED) {
+                            Log.d("MainActivity", "POST_NOTIFICATIONS permission granted.")
+                        } else {
+                            Log.d("MainActivity", "POST_NOTIFICATIONS permission denied.")
+                        }
+                    }
+
+                    Manifest.permission.RECORD_AUDIO -> {
+                        if (grantResults[index] == PackageManager.PERMISSION_GRANTED) {
+                            Log.d("MainActivity", "RECORD_AUDIO permission granted.")
+                        } else {
+                            Log.d("MainActivity", "RECORD_AUDIO permission denied.")
+                        }
+                    }
+
+                    Manifest.permission.READ_PHONE_STATE -> {
+                        if (grantResults[index] == PackageManager.PERMISSION_GRANTED) {
+                            Log.d("MainActivity", "READ_PHONE_STATE permission granted.")
+                        } else {
+                            Log.d("MainActivity", "READ_PHONE_STATE permission denied.")
+                        }
+                    }
+                }
             }
         }
     }
 
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         Log.e("Service", "configureFlutterEngine")
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                arrayOf(Manifest.permission.READ_PHONE_STATE),
-                REQUEST_READ_PHONE_STATE_PERMISSION
-            )
-        }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val intent = Intent()
-            val packageName = packageName
-            val pm = getSystemService(PowerManager::class.java)
-            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-                intent.action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
-                intent.data = Uri.parse("package:$packageName")
-                startActivity(intent)
-            }
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            checkPermissions()
-        }
+        checkAndRequestPermissions()
+        // Request battery optimization exclusion
+
         FileLog.startLogging(this)
         handleIntent(intent)
         val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)

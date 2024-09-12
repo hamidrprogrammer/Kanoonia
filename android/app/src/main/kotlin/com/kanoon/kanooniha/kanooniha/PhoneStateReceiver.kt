@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.Toast
 
 class PhoneStateReceiver : BroadcastReceiver() {
+
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
         val telephonyManager = context?.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
@@ -19,17 +20,17 @@ class PhoneStateReceiver : BroadcastReceiver() {
             @Deprecated("Deprecated in Java")
             override fun onCallStateChanged(state: Int, phoneNumber: String?) {
                 when (state) {
-                    TelephonyManager.CALL_STATE_RINGING -> {
-                        // Incoming call ringing
-                        Toast.makeText(context, "Incoming call from $phoneNumber", Toast.LENGTH_SHORT).show()
-                    }
+
                     TelephonyManager.CALL_STATE_OFFHOOK -> {
                         val serviceIntent = Intent(context, MySignalR::class.java)
                         serviceIntent.action = "PHONE_CALL_RECEIVED"
+                        serviceIntent.putExtra("IDS", "id")
                         context.startService(serviceIntent)
+
                         // Call picked up (user accepted)
                         Toast.makeText(context, "Call accepted", Toast.LENGTH_SHORT).show()
                     }
+
                     TelephonyManager.CALL_STATE_IDLE -> {
                         // Call ended or missed (user declined or hung up)
                         Toast.makeText(context, "Call ended or declined", Toast.LENGTH_SHORT).show()

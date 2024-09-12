@@ -3,12 +3,21 @@ workflows:
     name: Build and Test iOS
     environment:
       flutter: stable
-      xcode: "15"  # Update this to match the required Xcode version
+      xcode: "14.3"  # Make sure the Xcode version matches the required one for your project
     scripts:
       - name: Install dependencies
         script: |
           flutter pub get
-      - name: Add iOS platform
+      - name: Upgrade dependencies
+        script: |
+          flutter pub upgrade
+      - name: Clear pub cache
+        script: |
+          flutter pub cache repair
+      - name: Clean build
+        script: |
+          flutter clean
+      - name: Ensure iOS platform is included
         script: |
           if [ ! -d "ios" ]; then
             flutter create --platform ios .
@@ -19,3 +28,6 @@ workflows:
     artifacts:
       - build/ios/iphoneos/Runner.app
       - build/ios/iphoneos/Runner.app.dSYM
+    publishing:
+      artifacts:
+        - build/ios/iphoneos/Runner.ipa

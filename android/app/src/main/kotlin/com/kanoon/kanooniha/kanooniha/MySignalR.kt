@@ -8,6 +8,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -23,6 +24,7 @@ import android.telecom.TelecomManager
 import android.text.TextUtils
 import android.util.Log
 import android.widget.RemoteViews
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -51,6 +53,8 @@ import java.util.concurrent.TimeUnit
 class MySignalR : Service() {
     private val CHANNEL_ID = "kanoon"
     private var Call_Data = ""
+    private var Call_Data_arg = ""
+
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private lateinit var sharedPreferencesHelper: SharedPreferencesHelper
 
@@ -122,7 +126,15 @@ class MySignalR : Service() {
         val hangingUpTo = intent?.getStringExtra("hangingUpTo")
         val id = intent?.getStringExtra("ID")
         val stop = intent?.getStringExtra("stop")
-
+        if (intent?.action == "PHONE_CALL_RECEIVED") {
+            val savedCallData = retrieveCallData()
+            val savedCallDataJson = retrieveCallDataJson()
+            sendMessageEnd("456879894", savedCallData.toString())
+            val intent = Intent("CallDeclined")
+            intent.putExtra("message", savedCallDataJson)
+            sendBroadcast(intent)
+            // Handle phone call received
+        }
         if (stop != null) {
 
             if (stop =="2"){
@@ -158,13 +170,7 @@ class MySignalR : Service() {
             }
 
         }
-        if (intent?.action == "PHONE_CALL_RECEIVED") {
-            // Handle phone call received
-            if(Call_Data!=null){
-                declineCallWithRetry();
 
-            }
-        }
         if (intent?.action == "OPEN_Call_AND_JOIN") {
            r?.stop()
             FileLog.i("OPEN_Call_AND_JOIN","OPEN_Call_AND_JOIN========================>")
@@ -274,36 +280,17 @@ class MySignalR : Service() {
         FileLog.i("STARTm","hubConnection?.start()");
         return START_STICKY
     }
+    private fun retrieveCallData(): String? {
+        val sharedPreferences: SharedPreferences = getSharedPreferences("CallDataPrefs", Context.MODE_PRIVATE)
+        return sharedPreferences.getString("Call_Data", null)
+    }
+    private fun retrieveCallDataJson(): String? {
+        val sharedPreferences: SharedPreferences = getSharedPreferences("CallDataPrefs", Context.MODE_PRIVATE)
+        return sharedPreferences.getString("Call_Data_JSON", null)
+    }
     @RequiresApi(Build.VERSION_CODES.P)
     private fun declineCallWithRetry() {
-        val telecomManager = getSystemService(Context.TELECOM_SERVICE) as TelecomManager
 
-        // Attempt to end the call
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ANSWER_PHONE_CALLS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
-        if (!telecomManager.endCall()) {
-            // Call failed to decline, retry if attempts are remaining
-
-
-                    declineCallWithRetry() // Retry declining the call
-
-
-        } else {
-            // Call successfully declined
-            println("Call declined successfully")
-        }
     }
     private val maxRetryAttempts = 5
     private var retryAttempts = 0
@@ -408,10 +395,29 @@ class MySignalR : Service() {
                 Log.i("INFO", "CallIncoming")
                 val json = gson.toJson(args)
                 Call_Data = args.userIdHash
+                val sharedPreferences: SharedPreferences = getSharedPreferences("CallDataPrefs", Context.MODE_PRIVATE)
+                val editor = sharedPreferences.edit()
+
+                // Save Call_Data and its JSON representation
+                editor.putString("Call_Data", Call_Data.toString())
+                editor.putString("Call_Data_JSON", json)
+
+                editor.apply();
+
+                val savedCallData = retrieveCallData()
+                println("Retrieved Call_Data: $savedCallData")
                 if(flagNotif){
                    r?.play()
                     showIncomingNotification(args.userIdHash,args.username,args.username,json.toString())
+                    val handler = Handler(Looper.getMainLooper())
 
+                    // Delay time in milliseconds (40 seconds)
+                    val delayMillis: Long = 40000
+
+                    // Scheduling the function to run after 40 seconds
+                    handler.postDelayed({
+                        r?.stop() // Your function to be executed
+                    }, delayMillis)
                 }else{
                     val intent = Intent("CallIncoming")
 
