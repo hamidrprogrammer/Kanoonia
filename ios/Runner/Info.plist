@@ -45,5 +45,15 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
+	<!-- Add the following keys for sensitive data access -->
+	<key>NSContactsUsageDescription</key>
+	<string>This app requires access to contacts to [describe why your app needs access to contacts, e.g., "to connect you with your friends"].</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to your photo library to [describe why your app needs access to photos, e.g., "allow you to select and upload photos"].</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires access to the microphone to [describe why your app needs access to the microphone, e.g., "record audio for voice messages"].</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to the camera to [describe why your app needs access to the camera, e.g., "capture photos and videos"].</string>
 </dict>
 </plist>
